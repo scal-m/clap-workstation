@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<songs>
+    <song>
+        <artist>Amy Winehouse</artist>
+        <title>You Know I'm No Good</title>
+        <data>http://scapoual.free.fr/things/102  Amy Winehouse - You Know Im No Good.mp3</data>
+    </song>
+    <song>
+        <artist>Tom Caruana</artist>
+        <title>R.E.C. Room</title>
+        <data>http://scapoual.free.fr/things/12 R.E.C. Room.mp3</data>
+    </song>
+    <song>
+        <artist>Jacob Miller</artist>
+        <title>03 - 80,000 Careless Ethiopians</title>
+        <data>http://scapoual.free.fr/things/03 - 80,000 Careless Ethiopians.mp3</data>
+    </song>
+    <song>
+        <artist>April March</artist>
+        <title>Laisse Tomber Les Filles</title>
+        <data>http://scapoual.free.fr/things/April%20March%20-%20Laisse%20Tomber%20Les%20Filles.mp3</data>
+    </song>
+</songs>

@@ -1,0 +1,731 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="600" height="600" xmlns:code="http://code.google.com/p/flexlib/" creationComplete="initControls();" xmlns:components="components.*">
+
+
+  <mx:Script><![CDATA[
+      import mx.controls.advancedDataGridClasses.AdvancedDataGridColumn;
+  	import mx.managers.DragManager;
+  	import mx.collections.ArrayCollection;
+  	import mx.events.DragEvent;
+  	import mx.core.ByteArrayAsset;
+  	import mx.controls.AdvancedDataGrid;
+    import com.ryanberdeen.soundtouch.SimpleFilter;
+    import com.ryanberdeen.soundtouch.SoundTouch;
+    import com.ryanberdeen.soundtouch.FifoSampleBuffer;
+
+    import flash.events.Event;
+    import flash.media.Sound;
+    import flash.net.FileReference;
+
+    import org.audiofx.mp3.MP3FileReferenceLoader;
+    import org.audiofx.mp3.MP3SoundEvent;
+
+    private var soundUrl:String = null;
+    private var metronomicSoundUrl:String = null;
+
+    private var sound:Sound;
+    
+    private var metronomicSound:Sound;
+
+    private var outputSound:Sound;
+    private var soundChannel:SoundChannel;
+    private var soundTouch:SoundTouch;
+    private var filter:SimpleFilter;
+    
+    private var playing:Boolean = false;
+    private var loading:Boolean = false;
+    
+    private var soundLength:Number;
+    private var soundSizeInBytes:uint;
+    
+    private var currentItem:Object = null;
+    
+    private var leftThumbTime:Number;
+    private var rightThumbTime:Number;
+    private var leftThumbBytes:int;
+    private var rightThumbBytes:int;
+    
+    private var timeAfterLoop:int = 0;
+    
+    private var dragInitiator:String;
+    
+    private static var FREQUENCY:Number = 44.1;
+    private static var TIMESLIDERLENGTH:int = 1000;
+    
+
+    private function preparePlayer(sound2play:Sound,startPosition:Number = 0):void {
+      this.initControls();
+      this.enableControls();
+/*       if(playing) {
+          this.resetPlayer();
+      }else{
+          this.initControls();
+       } */
+      
+      outputSound = new Sound();
+      
+      soundTouch = new SoundTouch();
+      updateFilter();
+
+      filter = new SimpleFilter(sound2play, soundTouch);
+
+      outputSound.addEventListener(SampleDataEvent.SAMPLE_DATA, filter.handleSampleData);
+
+      playButton.enabled = true;
+      
+      
+      if(playing) {
+        this.play(startPosition);
+      } else {
+        filter.sourcePosition = startPosition * FREQUENCY;  
+      }
+    }
+    
+    
+    private function onEnterFrame(e:Event):void {
+        if (soundChannel != null) {
+            var position:Number = 0;
+            if(loading) {
+                position = soundChannel.position;
+                calculateTime(position);
+            } else {
+                position = filter.sourcePosition / FREQUENCY;
+
+                //trace("posi : " + filter.sourcePosition);
+                //trace("right : " + rightThumbBytes);
+                //trace("left : " + leftThumbBytes);
+                if (filter.sourcePosition > rightThumbBytes || filter.sourcePosition < leftThumbBytes) {
+                    this.pause();
+                    //position = leftThumbBytes / FREQUENCY;
+                    //filter.sourcePosition = leftThumbBytes;
+                    
+                    if(timeAfterLoopStepper.value > 0) {
+                        this.disableControls();
+                        
+                        var timer:Timer = new Timer(1000, timeAfterLoop / 1000);
+                        timer.addEventListener(TimerEvent.TIMER, updateCountdown);
+                        timer.addEventListener(TimerEvent.TIMER_COMPLETE,handleTimerComplete);
+                        timer.start();
+                    } else {
+                        position = leftThumbBytes / FREQUENCY;
+                        play(position);
+                        calculateTime(position);
+                    }
+                    
+                    //play(position);            
+                    //setTimeout(play, timeAfterLoop, position);
+                    //countdown.text = "" + this.timeAfterLoopStepper.value;
+                } else {
+                    calculateTime(position);
+                }
+            }
+        }        
+    }
+    
+     private function updateCountdown(e:Event):void {
+        var t:Timer = e.currentTarget as Timer;
+        countdown.text = "" + ((timeAfterLoop / 1000) - t.currentCount);
+     }
+     
+     private function handleTimerComplete(e:Event):void {
+         var t:Timer = e.currentTarget as Timer;
+         t.stop();
+         t.reset();
+         var position:Number = leftThumbBytes / FREQUENCY;
+         play(position);
+         calculateTime(position);
+         countdown.text = "" + this.timeAfterLoopStepper.value;
+     }
+     
+     private function calculateTime(position:Number):void {
+        var newX:int = ((position / soundLength) * timeSlider.width);
+        
+        // set up times
+        var minutes:Number = Math.floor(position / 1000 / 60);
+        var seconds:Number = Math.floor(position / 1000) % 60;
+        var totalMins:Number = Math.floor(soundLength / 1000 / 60);
+        var totalSec:Number = Math.floor(soundLength / 1000) % 60;
+        
+        if (playing) {
+            updateTime(newX, minutes, seconds, totalMins, totalSec);
+        }
+     }
+       
+    private function updateTime(newX:Number, minutes:Number, seconds:Number, totalMins:Number, totalSec:Number):void {
+        timeSlider.getThumbAt(0).x = newX;
+        songTime.text = ((minutes < 10) ? "0" + minutes : minutes) + ":" + ((seconds < 10) ? "0" + seconds : seconds);
+        songTotalTime.text = ((totalMins < 10) ? "0" + totalMins : totalMins) + ":" + ((totalSec < 10) ? "0" + totalSec : totalSec); 
+    }
+
+    private function updateFilter():void {
+      if (soundTouch != null) {
+        soundTouch.tempo = tempoSlider.value;
+        //trace(pitchSlider.value);
+        if(pitchSliderMagnetic.selected == true) {
+            soundTouch.pitchSemitones = pitchSlider.value;
+        } else {
+            soundTouch.pitchOctaves = pitchSlider.value;
+        }
+
+        tempoLabel.text = "Tempo: " + getCurrentTempo();
+        pitchLabel.text = "Tone: " + getPitchString(pitchSlider.value);
+      }
+    }
+    
+    private function getCurrentTempo():Number {
+        if(pitchSlider.value !=0) {
+            return Math.round(soundTouch.tempo * soundTouch.rate*100)/100;
+        } else {
+            return Math.round(soundTouch.tempo * 100) / 100;
+        }
+    }
+    
+    private function getPitchString(value:Number):String {
+        if(this.pitchSliderMagnetic.selected == true){
+            if(value > 0) {
+                if(value % 2 != 0) {
+                    if(value == 1) {
+                        return "½";
+                    }else {
+                        return ((value / 2) - 0.5) + "½";
+                    }
+                } else {
+                    return (value / 2).toString();
+                }
+            } else {
+                
+            }
+        }
+        return Math.round(value * 6 * 100) / 100 + "";
+    }
+   
+
+    private function resetPlayer():void {
+      if (playing) pause();
+      soundChannel = null;
+      this.playButton.enabled = false;
+    }
+    
+    private function initControls():void {
+        this.songTime.text = "00:00";
+        this.songTotalTime.text = "00:00";
+        this.playButton.enabled = true;
+        this.timeSlider.value = 0;
+        this.initLoopSlider();
+        this.tempoSlider.value = 1;
+        this.pitchSlider.value = 0;
+    }
+    
+    private function disableControls():void {
+        //this.songTime.enabled = false;
+        //this.songTotalTime.enabled = false;
+        //this.playButton.enabled = false;
+        this.timeSlider.enabled = false;
+        this.loopSlider.enabled = false;
+        this.tempoSlider.enabled = false;
+        this.pitchSlider.enabled = false;
+        this.resetLoop.enabled = false;
+        this.timeAfterLoopStepper.enabled = false;
+        this.pitchSliderMagnetic.enabled = false;
+        this.metronomeSwitch.enabled = false;
+        
+    }
+
+    private function enableControls():void {
+        //this.songTime.enabled = true;
+        //this.songTotalTime.enabled = true;
+        this.playButton.enabled = true;
+        this.timeSlider.enabled = true;
+        this.loopSlider.enabled = true;
+        this.tempoSlider.enabled = true;
+        this.pitchSlider.enabled = true;
+        this.resetLoop.enabled = true;
+        this.timeAfterLoopStepper.enabled = true;
+        this.pitchSliderMagnetic.enabled = true;
+    }
+    
+    private function initLoopSlider():void {
+        loopSlider.setThumbValueAt(0,0);
+        loopSlider.setThumbValueAt(1,TIMESLIDERLENGTH);
+      
+        leftThumbTime = 0
+        rightThumbTime = soundLength;
+       
+        leftThumbBytes = leftThumbTime * FREQUENCY;
+        rightThumbBytes = rightThumbTime * FREQUENCY;
+    }
+ 
+    private function loadSound(soundURL:String):void {
+        if(soundChannel) {
+            soundChannel.stop();
+        }
+        if(filter) filter.clear();
+        if(soundTouch) soundTouch.clear(); 
+        resetPlayer();      
+        
+        sound = new Sound();
+        sound.addEventListener(IOErrorEvent.IO_ERROR,ioErrorHandler);
+        sound.addEventListener(ProgressEvent.PROGRESS, progressHandler);
+        sound.addEventListener(Event.COMPLETE, onSoundLoaded);
+        
+        var urlReq:URLRequest = new URLRequest(soundURL);
+        
+        this.soundLoadProgress.visible = true;
+        
+        this.initControls();
+        
+        var soundContext:SoundLoaderContext = new SoundLoaderContext(5000,true);
+        sound.load(urlReq,soundContext);
+        soundChannel = sound.play();
+        this.playButton.label = "Pause";
+        
+        this.playButton.enabled = true;   
+        playing = true;
+        loading = true;
+        setVolume(volumeSlider.value);
+              
+        soundLength = 0;
+               
+        this.disableControls();
+        this.metronomeSwitch.selected = false;     
+        
+        this.addEventListener(Event.ENTER_FRAME,onEnterFrame);
+    }
+    
+    private function guessDuration(s:Sound):Number {
+        return Math.floor(s.length / (s.bytesLoaded / s.bytesTotal));
+    }
+
+/*     
+    private function onSoundLoaded(event:Event):void {
+        sound.removeEventListener(Event.COMPLETE, onSoundLoaded);
+        sound.removeEventListener(IOErrorEvent.IO_ERROR,ioErrorHandler);
+        sound.removeEventListener(ProgressEvent.PROGRESS, progressHandler);
+
+        soundLoadProgress.visible=false;
+        
+        soundLength = sound.length;
+        soundSizeInBytes = soundLength * FREQUENCY;
+          
+        preparePlayer();
+    }
+ */
+
+    private function onSoundLoaded(event:Event):void {
+        this.removeEventListener(Event.ENTER_FRAME, onEnterFrame);
+        
+        sound.removeEventListener(Event.COMPLETE, onSoundLoaded);
+        sound.removeEventListener(IOErrorEvent.IO_ERROR,ioErrorHandler);
+        sound.removeEventListener(ProgressEvent.PROGRESS, progressHandler);
+
+        soundLoadProgress.visible=false;
+        
+        loading = false;
+        
+        soundLength = sound.length;
+        soundSizeInBytes = soundLength * FREQUENCY;     
+        
+        var currentPosition:Number = soundChannel.position;
+        soundChannel.stop();
+        
+        preparePlayer(sound,currentPosition);
+        
+        loadMetronomicSound(metronomicSoundUrl);
+    }
+    
+    
+    /*
+        Chargement du son avec clic metronomique
+    */
+    private function loadMetronomicSound(url:String):void {
+        metronomeSwitch.enabled = false;
+        metronomicSound = new Sound();
+        metronomicSound.addEventListener(IOErrorEvent.IO_ERROR,ioErrorHandler);
+        metronomicSound.addEventListener(Event.COMPLETE, onMetronomicSoundLoaded);
+        
+        var urlReq:URLRequest = new URLRequest(url);
+        metronomicSound.load(urlReq);
+    }
+    
+    private function onMetronomicSoundLoaded(event:Event):void {
+        metronomicSound.removeEventListener(Event.COMPLETE, onSoundLoaded);
+        metronomicSound.removeEventListener(IOErrorEvent.IO_ERROR,ioErrorHandler);
+        //activate check button
+        metronomeSwitch.enabled = true;
+    }
+    
+    private function activateMetronome():void {
+        //soundLength = metronomicSound.length;
+        //soundSizeInBytes = soundLength * FREQUENCY;     
+        
+        //var currentPosition:Number = soundChannel.position;
+        var currentPosition:Number = filter.sourcePosition / FREQUENCY;
+        
+        soundChannel.stop();
+        
+        preparePlayerForMetronome(metronomicSound,currentPosition);
+    }
+    
+    private function desactivateMetronome():void {
+        //soundLength = sound.length;
+        //soundSizeInBytes = soundLength * FREQUENCY;     
+        
+        //var currentPosition:Number = soundChannel.position;
+        var currentPosition:Number = filter.sourcePosition / FREQUENCY;
+        
+        soundChannel.stop();
+        
+        preparePlayerForMetronome(sound,currentPosition);
+    }
+    
+    private function preparePlayerForMetronome(sound2play:Sound, startPosition:Number):void {
+        outputSound = new Sound();
+      
+        soundTouch = new SoundTouch();
+        updateFilter();
+        
+        filter = new SimpleFilter(sound2play, soundTouch);
+        
+        outputSound.addEventListener(SampleDataEvent.SAMPLE_DATA, filter.handleSampleData);
+        filter.sourcePosition = startPosition * FREQUENCY;
+        if(playing) this.play(startPosition);
+    }
+    
+    private function handleMetronomeSwitch(e:Event):void {
+        if(e.target.selected == true) {
+            activateMetronome();
+        } else {
+            desactivateMetronome();
+        }
+    }    
+
+ 
+    private function soundCompleteHandler(e:Event):void {
+        //Morceau suivant
+        //trace(songsListXML.getItemAt(playlist.selectedIndex + 1).data);
+        //this.metronomeSwitch.selected = false;
+        
+        this.pause();
+                
+        var libraryData:XMLListCollection = library.dataProvider as XMLListCollection;
+        //trace(playlistData.length);
+        //trace(playlist.selectedIndex);
+        if(libraryData != null){
+            var currentSoundIndex:int = -1;
+            if(currentItem) {
+                currentSoundIndex= libraryData.getItemIndex(currentItem);
+            }
+            
+            if ( currentSoundIndex < libraryData.length - 1 ){
+                soundUrl = libraryData.getItemAt(currentSoundIndex + 1).data.normal;
+                metronomicSoundUrl = libraryData.getItemAt(currentSoundIndex + 1).data.metronome;
+                currentSoundIndex += 1
+                loadSound(soundUrl);
+                currentItem = libraryData.getItemAt(currentSoundIndex);
+            } else {
+                //playlist.selectedIndex = 0;
+                currentSoundIndex = -1;
+                soundUrl = null;
+                metronomicSoundUrl = null;
+                currentItem = null;
+                this.initControls();
+            }
+            
+            library.invalidateList();
+            
+        }
+    }
+
+    private function togglePlayPause():void {
+        if(loading) {
+            var pausePosition:int = soundChannel.position;
+            if(playing){
+                this.removeEventListener(Event.ENTER_FRAME, onEnterFrame);
+                soundChannel.stop();
+                playing = false;
+                playButton.label = "Play";
+            } else{
+                soundChannel = sound.play(pausePosition);
+                this.addEventListener(Event.ENTER_FRAME, onEnterFrame);
+                setVolume(volumeSlider.value);
+                playing = true;
+                playButton.label = "Pause";                
+            }
+        } else{
+            if(currentItem){
+                if (!playing) {
+                    play(filter.sourcePosition / FREQUENCY);
+                } else {
+                    pause();
+                }
+            } else {
+                var currentSoundIndex:int = 0;
+                var libraryData:XMLListCollection = library.dataProvider as XMLListCollection;
+                soundUrl = libraryData.getItemAt(currentSoundIndex).data.normal;
+                metronomicSoundUrl = libraryData.getItemAt(currentSoundIndex).data.metronome;
+                currentItem = libraryData.getItemAt(currentSoundIndex);
+                library.invalidateList();
+                loadSound(soundUrl);
+            }
+        }
+    }
+
+    private function play(startPosition:Number = 0):void { 
+      this.enableControls();     
+      filter.sourcePosition = startPosition * FREQUENCY;
+      //soundChannel.stop();
+      soundChannel = outputSound.play();
+      
+      
+      soundChannel.addEventListener(Event.SOUND_COMPLETE, soundCompleteHandler);
+      this.addEventListener(Event.ENTER_FRAME, onEnterFrame);
+      setVolume(volumeSlider.value);
+      playing = true;
+      playButton.label = "Pause";
+    }
+ 
+    private function pause():void {
+      if (playing) {
+        soundChannel.removeEventListener(Event.SOUND_COMPLETE, soundCompleteHandler);
+        this.removeEventListener(Event.ENTER_FRAME, onEnterFrame);
+        soundChannel.stop();
+      }
+      playing = false;
+      playButton.label = "Play";
+      
+    }
+    
+    private function setVolume(volume:Number):void {
+        if(sound != null){
+//            trace("setVolume: " + volume);
+            var transform:SoundTransform = soundChannel.soundTransform;
+            transform.volume = volume;
+            soundChannel.soundTransform = transform;
+        }else{
+            trace("no song to set volume");
+            return;
+        }
+    }
+    
+    private function doThumbDrag(event:Event):void {
+        if(sound == null) return;
+        
+        var playhead:Number = timeSlider.value;
+        filter.sourcePosition = (playhead * soundSizeInBytes) / TIMESLIDERLENGTH;
+    }
+    
+    private function handleLoopSlider(event:Event):void {
+        leftThumbTime = (loopSlider.values[0] * soundLength) / TIMESLIDERLENGTH;
+        rightThumbTime = (loopSlider.values[1] * soundLength) / TIMESLIDERLENGTH;
+        
+        leftThumbBytes = leftThumbTime * FREQUENCY;
+        rightThumbBytes = rightThumbTime * FREQUENCY;
+    }
+
+
+/*     
+    private function handlePlaylist(event:Event):void {
+        var soundURL:String = event.target.selectedItem.data;
+        
+        loadSound(soundURL);
+        
+        //currentSoundIndex = event.target.selectedIndex;
+        currentItem = XMLListCollection(playlist.dataProvider).getItemAt(event.target.selectedIndex);
+        playlist.rowColorFunction = selectPlayedItemColor;   
+    }
+ */
+
+    private function handlePlaylist(event:Event):void {
+        soundUrl = event.target.selectedItem.data.normal;
+        metronomicSoundUrl = event.target.selectedItem.data.metronome;
+ 
+        loadSound(soundUrl);
+        
+        //currentSoundIndex = event.currentTarget.selectedIndex;
+        
+        currentItem = XMLListCollection(library.dataProvider).getItemAt(event.currentTarget.selectedIndex);
+        
+        library.invalidateList();
+    }
+     
+    private function handleLoopStepper(event:Event):void {
+        timeAfterLoop = timeAfterLoopStepper.value * 1000;
+        countdown.text = "" + timeAfterLoopStepper.value;
+    }
+    
+/*     private function clearPlaylist(event:Event):void {
+        XMLListCollection(playlist.dataProvider).removeAll();
+    } 
+    
+    public function deleteItem(event:Event):void {
+        var gridDP:XMLListCollection = playlist.dataProvider as XMLListCollection;
+        var selectedItemIndex:int = playlist.selectedIndex;
+        if(selectedItemIndex != gridDP.getItemIndex(currentItem)) {
+            gridDP.removeItemAt(selectedItemIndex);
+        }
+    } */
+    
+    private function currentSoundPlayingStyle(data:Object, col:AdvancedDataGridColumn):Object {
+        if(data == currentItem){
+            return {fontWeight:"bold"};
+        }
+        return null;
+    }
+      
+    private function progressHandler(event:ProgressEvent):void {
+//        trace("progress : "+event.bytesLoaded/event.bytesTotal);
+//        this.soundLoadProgress.setProgress((event.bytesLoaded/event.bytesTotal)*100,100);
+
+        soundLength = guessDuration(sound);
+        this.soundLoadProgress.setProgress(event.bytesLoaded,event.bytesTotal);
+//        this.soundLoadProgress.
+    }
+    
+    private function ioErrorHandler(event:IOErrorEvent):void {
+        trace("io Error");
+    }
+    
+    private function magnetizePitchSlider():void {
+        this.pitchSlider.snapInterval = 1;
+        this.pitchSlider.minimum = -12;
+        this.pitchSlider.maximum = 12;
+        this.pitchSlider.value *= 12; 
+    }
+    
+    private function demagnetizePitchSlider():void {
+        this.pitchSlider.snapInterval = 0.01;
+        this.pitchSlider.minimum = -1;
+        this.pitchSlider.maximum = 1;
+        this.pitchSlider.value /= 12;
+    }
+    
+    private function handlePitchSliderMagnetization(e:Event):void {
+        if(e.target.selected == true) {
+            magnetizePitchSlider();
+        } else {
+            demagnetizePitchSlider();
+        }
+    }
+    
+  ]]></mx:Script>
+  
+
+
+  <mx:XML id="songsXML" source="../data/songs.xml" />
+  <mx:XMLListCollection id="songsListXML" source="{songsXML.song}" />
+
+    <mx:AdvancedDataGrid
+        id="library" 
+        dataProvider="{songsListXML}" 
+        width="100%" 
+        height="100%" 
+        verticalScrollPolicy="auto" 
+        horizontalScrollPolicy="off"
+        draggableColumns="false"
+        doubleClickEnabled="true" 
+        itemDoubleClick="handlePlaylist(event)"
+        dragEnabled="true"
+        dropEnabled="true" 
+        dragMoveEnabled="true" 
+        styleFunction="currentSoundPlayingStyle">
+        <mx:columns>
+            <mx:AdvancedDataGridColumn dataField="artist" headerText="Artist"/>
+            <mx:AdvancedDataGridColumn dataField="title" headerText="Title" />
+            <!--mx:DataGridColumn dataField="data" headerText="" width="0" resizable="false"/-->
+        </mx:columns>
+    </mx:AdvancedDataGrid>
+  
+  <mx:HBox>
+    <mx:Label id="songTime" text="00:00"/>
+    <mx:Label width="10" text="/"/>
+    <mx:Label id="songTotalTime" text="00:00"/>
+    <mx:Button id="playButton" label="Play" enabled="false" click="togglePlayPause();"/>
+    <mx:ProgressBar id="soundLoadProgress" visible="false" minimum="0" maximum="100" label="" direction="right" mode="manual" />
+  </mx:HBox>
+  <mx:Canvas width="100%">
+    
+    
+    <code:HSlider id="loopSlider" 
+        thumbCount="2" 
+        showTrackHighlight="true" 
+        minimum="0.0" 
+        maximum="1000" 
+        snapInterval="0.01"
+        thumbOffset="6"
+        change="handleLoopSlider(event);" 
+        click="handleLoopSlider(event);"
+        width="100%"
+        showDataTip="false"
+        toolTip="{}"
+        y="0"/>
+        
+    <code:HSlider id="timeSlider" 
+        minimum="0.0" 
+        maximum="1000" 
+        snapInterval="0.01" 
+        toolTip="{}" 
+        liveDragging="true" 
+        allowTrackClick="false" 
+        thumbDrag="doThumbDrag(event)" 
+        thumbRelease="doThumbDrag(event)" 
+        width="100%" 
+        showDataTip="false" 
+        invertThumbDirection="true" 
+        trackSkin="components.LoopSliderTrackSkin"
+        y="-8"/>
+  </mx:Canvas>
+  
+  <mx:HBox>
+      <mx:Button id="resetLoop" label="Reset Loop" click="initLoopSlider();" />
+      <mx:NumericStepper id="timeAfterLoopStepper" minimum="0" maximum="10" value="0" change="handleLoopStepper(event)"/>
+      <mx:Label id="countdown" text="0"/>
+      <mx:Label text="sec."/>
+  </mx:HBox>
+
+  <mx:HBox width="100%">
+    <mx:VBox width="100%">
+        <mx:HBox>
+            <mx:HSlider id="tempoSlider" 
+            minimum="0.5" 
+            maximum="1.5" 
+            value="1" 
+            snapInterval="0.01" 
+            liveDragging="false" 
+            allowTrackClick="true" 
+            change="updateFilter();" 
+            width="100%"/>  
+            <mx:Label text="Tempo: " id="tempoLabel"/>
+        </mx:HBox>
+        
+        <mx:HBox>
+            <mx:HSlider id="pitchSlider" 
+            minimum="-12" 
+            maximum="12" 
+            value="0" 
+            snapInterval="1" 
+            liveDragging="false" 
+            allowTrackClick="true" 
+            change="updateFilter();" 
+            dataTipFormatFunction="{getPitchString}" 
+            width="100%"/>
+            <mx:Label text="Tone: " id="pitchLabel"/>
+            <mx:CheckBox id="pitchSliderMagnetic" label="" selected="true" click="handlePitchSliderMagnetization(event);"/>
+        </mx:HBox>
+    </mx:VBox>
+    
+    <mx:CheckBox id="metronomeSwitch" label="Metronome" enabled="false" click="handleMetronomeSwitch(event);"/>
+    
+    <mx:VBox width="100%">
+        <mx:Label text="Volume"/>
+        <mx:VSlider id="volumeSlider" 
+            minimum="0" 
+            maximum="1" 
+            snapInterval="0.01" 
+            liveDragging="true" 
+            allowTrackClick="true" 
+            change="setVolume(this.volumeSlider.value);" 
+            value="0.5"/>
+    </mx:VBox>
+    
+  </mx:HBox>
+</mx:VBox>

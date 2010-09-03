@@ -1,0 +1,468 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="600" height="600" xmlns:code="http://code.google.com/p/flexlib/" creationComplete="resetPlayer();" xmlns:components="components.*">
+  <mx:HBox paddingBottom="10">
+    <mx:Button id="browseButton" label="Open an MP3…" click="chooseFile();"/>
+  </mx:HBox>
+  <mx:XML id="songsXML" source="../data/songs.xml" />
+  <mx:XMLListCollection id="songsListXML" source="{songsXML.song}" />
+  <mx:HBox>
+    <components:RowColorDataGrid id="playlist" 
+	    width="100%" 
+	    height="200" 
+	    verticalScrollPolicy="auto"
+	    dataProvider="{new XMLListCollection()}" 
+	    horizontalScrollPolicy="off" 
+	    draggableColumns="false" 
+	    doubleClickEnabled="true" 
+        itemDoubleClick="handlePlaylist(event)"
+	    dragEnabled="true"
+        dropEnabled="true"
+	    dragMoveEnabled="true" 
+	    rowColorFunction="selectPlayedItemColor">
+	    <components:columns>
+	        <mx:DataGridColumn dataField="artist" headerText="Artist"/>
+	        <mx:DataGridColumn dataField="title" headerText="Title" />
+	        <mx:DataGridColumn dataField="data" headerText="" width="0" resizable="false"/>
+	        <mx:DataGridColumn width="40" resizable="false">
+               <mx:itemRenderer>
+                    <mx:Component>
+                        <mx:LinkButton label="X" click="{outerDocument.deleteItem(event)}"/>
+                    </mx:Component>
+               </mx:itemRenderer>
+            </mx:DataGridColumn>
+	    </components:columns>
+	</components:RowColorDataGrid>
+    <mx:DataGrid id="library" 
+        dataProvider="{songsListXML}" 
+        width="100%" 
+        height="200" 
+        verticalScrollPolicy="auto" 
+        horizontalScrollPolicy="off"
+        draggableColumns="false"
+        dragEnabled="true"
+        dropEnabled="false">
+        <mx:columns>
+            <mx:DataGridColumn dataField="artist" headerText="Artist"/>
+            <mx:DataGridColumn dataField="title" headerText="Title" />
+            <mx:DataGridColumn dataField="data" headerText="" width="0" resizable="false"/>
+        </mx:columns>
+    </mx:DataGrid>	
+  </mx:HBox>
+  
+  <mx:Button id="clearList" label="clear" click="clearPlaylist(event)"/>
+  
+  <mx:HBox>
+  	<mx:Label text="Current time:"/>
+    <mx:Label id="songTime" width="81"/>
+    <mx:Label text="Total time:"/>
+    <mx:Label id="songTotalTime" width="62"/>
+  </mx:HBox>
+  <mx:Canvas width="100%">
+  	
+    
+    <code:HSlider id="loopSlider" 
+	    thumbCount="2" 
+	    showTrackHighlight="true" 
+	    minimum="0.0" 
+	    maximum="1000" 
+	    snapInterval="0.01"
+	    thumbOffset="6"
+	    change="handleLoopSlider(event);" 
+	    width="100%"
+	    showDataTip="false"
+	    toolTip="{}"
+	    y="0"/>
+	    
+	<code:HSlider id="timeSlider" 
+        minimum="0.0" 
+        maximum="1000" 
+        snapInterval="0.01" 
+        toolTip="{}" 
+        liveDragging="true" 
+        allowTrackClick="false" 
+        thumbDrag="doThumbDrag(event)" 
+        thumbRelease="doThumbDrag(event)" 
+        width="100%" 
+        showDataTip="false" 
+        invertThumbDirection="true" 
+        trackSkin="components.LoopSliderTrackSkin"
+        y="-8"/>
+  </mx:Canvas>
+  
+  <mx:HBox>
+  	  <mx:Button id="resetLoop" label="Reset Loop" click="initLoopSlider();" />
+  	  <mx:NumericStepper id="timeAfterLoopStepper" minimum="0" maximum="10" value="0" change="handleLoopStepper(event)"/>
+  </mx:HBox>
+
+  <mx:VBox width="100%">
+    <mx:Label text="Tempo"/>
+    <mx:HSlider id="tempoSlider" 
+    	minimum="0.5" 
+    	maximum="1.5" 
+    	value="1" 
+    	snapInterval="0.01" 
+    	liveDragging="false" 
+    	allowTrackClick="true" 
+    	change="updateFilter();" 
+    	width="100%"/>
+    
+    <mx:Label text="Pitch"/>
+    <mx:HSlider id="pitchSlider" 
+    	minimum="-12" 
+    	maximum="12" 
+    	value="0" 
+    	snapInterval="1" 
+    	liveDragging="false" 
+    	allowTrackClick="true" 
+    	change="updateFilter();" 
+    	width="100%"/>
+  
+    <mx:Label text="Volume"/>
+    <mx:HSlider id="volumeSlider" 
+    	minimum="0" 
+    	maximum="1" 
+    	snapInterval="0.01" 
+    	liveDragging="true" 
+    	allowTrackClick="true" 
+    	change="setVolume(this.volumeSlider.value);" 
+    	value="0.5"/>
+  </mx:VBox>
+  <mx:Button id="playButton" label="Play" enabled="false" click="togglePlayPause();"/>
+  <mx:Label text="Tempo: " id="tempoLabel"/>
+  <mx:Label text="Rate: " id="pitchLabel"/>
+
+  <mx:Script><![CDATA[
+  	import mx.managers.DragManager;
+  	import mx.collections.ArrayCollection;
+  	import mx.events.DragEvent;
+  	import mx.core.ByteArrayAsset;
+    import com.ryanberdeen.soundtouch.SimpleFilter;
+    import com.ryanberdeen.soundtouch.SoundTouch;
+    import com.ryanberdeen.soundtouch.FifoSampleBuffer;
+
+    import flash.events.Event;
+    import flash.media.Sound;
+    import flash.net.FileReference;
+
+    import org.audiofx.mp3.MP3FileReferenceLoader;
+    import org.audiofx.mp3.MP3SoundEvent;
+
+    private var fileReference:FileReference;
+    private var mp3Loader:MP3FileReferenceLoader;
+    private var sound:Sound;
+
+    private var outputSound:Sound;
+    private var soundChannel:SoundChannel;
+    private var soundTouch:SoundTouch;
+    private var filter:SimpleFilter;
+    
+    private var playing:Boolean;
+    
+    private var soundLength:Number;
+    private var soundSizeInBytes:uint;
+    
+    //private var currentSoundIndex:int;
+    //private var selectedItemIndex:int;
+    private var currentItem:Object;
+    
+    private var leftThumbTime:Number;
+    private var rightThumbTime:Number;
+    private var leftThumbBytes:int;
+    private var rightThumbBytes:int;
+    
+    private var timeAfterLoop:int = 0;
+    
+    private var dragInitiator:String;
+    
+    private static var FREQUENCY:Number = 44.1;
+    private static var TIMESLIDERLENGTH:int = 1000;
+
+    private function chooseFile():void {
+      fileReference = new FileReference();
+      fileReference.addEventListener(Event.SELECT, handleFileSelected);
+      fileReference.browse([new FileFilter("MP3 Files", "*.mp3")]);
+    }
+
+    private function handleFileSelected(e:Event):void {
+      resetPlayer();
+      mp3Loader = new MP3FileReferenceLoader();
+      mp3Loader.addEventListener(Event.COMPLETE, handleSoundLoadComplete);
+      mp3Loader.getSound(fileReference);
+    }
+
+    private function handleSoundLoadComplete(e:MP3SoundEvent):void {
+      mp3Loader.removeEventListener(Event.COMPLETE, handleSoundLoadComplete);
+      sound = e.sound;
+      
+      soundLength = sound.length;
+      soundSizeInBytes = soundLength * FREQUENCY;
+      
+      preparePlayer();
+    }
+
+    private function preparePlayer():void {
+      resetPlayer();
+
+      outputSound = new Sound();
+      soundTouch = new SoundTouch();
+      updateFilter();
+
+      filter = new SimpleFilter(sound, soundTouch);
+
+      outputSound.addEventListener(SampleDataEvent.SAMPLE_DATA, filter.handleSampleData);
+      
+      playButton.enabled = true;
+      playButton.label = "Play";
+      playing = false;
+      this.play();
+    }
+    
+    private function onEnterFrame(e:Event):void {
+        if (soundChannel != null) {
+	        var bytesPosition:int = filter.sourcePosition;
+	        var position:Number = filter.sourcePosition / FREQUENCY;
+	        
+	        //trace("posi : " + filter.sourcePosition);
+	        //trace("right : " + rightThumbBytes);
+	        //trace("left : " + leftThumbBytes);
+	        if (filter.sourcePosition > rightThumbBytes || filter.sourcePosition < leftThumbBytes) {
+	        	filter.sourcePosition = leftThumbBytes;
+	        	position = filter.sourcePosition / FREQUENCY;
+	        	this.pause();
+                setTimeout(play, timeAfterLoop);
+	        }
+	        
+	        var newX:int = ((position / soundLength) * timeSlider.width);
+	        
+	        // set up times
+	        var minutes:Number = Math.floor(position / 1000 / 60);
+	        var seconds:Number = Math.floor(position / 1000) % 60;
+	        var totalMins:Number = Math.floor(soundLength / 1000 / 60);
+	        var totalSec:Number = Math.floor(soundLength / 1000) % 60;
+	       }
+    	if (playing) {
+    	   updateTime(newX, minutes, seconds, totalMins, totalSec);
+    	}
+    }
+    
+    private function updateTime(newX:Number, minutes:Number, seconds:Number, totalMins:Number, totalSec:Number):void {
+        timeSlider.getThumbAt(0).x = newX;
+        songTime.text = ((minutes < 10) ? "0" + minutes : minutes) + ":" + ((seconds < 10) ? "0" + seconds : seconds);
+        songTotalTime.text = ((totalMins < 10) ? "0" + totalMins : totalMins) + ":" + ((totalSec < 10) ? "0" + totalSec : totalSec); 
+    }
+    
+/*     private function resetFilter():void {
+    	if (soundTouch != null) {
+    		soundTouch.tempo = 1;
+    		soundTouch.pitchSemitones = 0;
+    		tempoSlider.value = 1;
+    		pitchSlider.value = 0;
+    	}
+    } */
+
+    private function updateFilter():void {
+      if (soundTouch != null) {
+        soundTouch.tempo = tempoSlider.value;
+        soundTouch.pitchSemitones = pitchSlider.value;
+
+        tempoLabel.text = "Tempo: " + soundTouch.tempo;
+        pitchLabel.text = "Tone: " + pitchSlider.value;
+      }
+    }
+
+    private function resetPlayer():void {
+      if (playing) {
+        pause();
+      }
+      soundChannel = null;
+      initLoopSlider();
+    }
+    
+    private function initLoopSlider():void {
+        loopSlider.setThumbValueAt(0,0);
+	    loopSlider.setThumbValueAt(1,TIMESLIDERLENGTH);
+	  
+	    leftThumbTime = 0
+	    rightThumbTime = soundLength;
+	   
+	    leftThumbBytes = leftThumbTime * FREQUENCY;
+	    rightThumbBytes = rightThumbTime * FREQUENCY;
+    }
+
+    private function soundCompleteHandler(e:Event):void {
+    	//Morceau suivant
+    	//trace(songsListXML.getItemAt(playlist.selectedIndex + 1).data);
+     	this.pause();
+     	sound = new Sound();
+        sound.addEventListener(Event.COMPLETE, onSoundLoaded);
+        var playlistData:XMLListCollection = playlist.dataProvider as XMLListCollection;
+        var soundURL:String;
+        //trace(playlistData.length);
+        //trace(playlist.selectedIndex);
+        var currentSoundIndex:int = playlistData.getItemIndex(currentItem);
+        
+        if ( currentSoundIndex < playlistData.length - 1 ){
+        	soundURL = playlistData.getItemAt(currentSoundIndex + 1).data;
+            //playlist.selectedIndex += 1;
+            currentSoundIndex += 1
+        } else {
+            soundURL = playlistData.getItemAt(0).data;
+            //playlist.selectedIndex = 0;
+            currentSoundIndex = 0;
+        }
+        
+        currentItem = playlistData.getItemAt(currentSoundIndex);
+        playlist.rowColorFunction = selectPlayedItemColor;
+        
+        var urlReq:URLRequest = new URLRequest(soundURL);
+        
+        sound.load(urlReq);
+    }
+
+    private function togglePlayPause():void {
+      if (!playing) {
+        play();
+      }
+      else {
+        pause();
+      }
+    }
+
+    private function play():void {
+      soundChannel = outputSound.play();
+      soundChannel.addEventListener(Event.SOUND_COMPLETE, soundCompleteHandler);
+      this.addEventListener(Event.ENTER_FRAME, onEnterFrame);
+      setVolume(volumeSlider.value);
+      playing = true;
+      playButton.label = "Pause";
+    }
+ 
+    private function pause():void {
+      if (playing) {
+      	soundChannel.removeEventListener(Event.SOUND_COMPLETE, soundCompleteHandler);
+      	this.removeEventListener(Event.ENTER_FRAME, onEnterFrame);
+        soundChannel.stop();
+      }
+      playing = false;
+      playButton.label = "Play";
+      
+    }
+    
+    private function setVolume(volume:Number):void {
+        if(sound != null){
+            trace("setVolume: " + volume);
+            var transform:SoundTransform = soundChannel.soundTransform;
+            transform.volume = volume;
+            soundChannel.soundTransform = transform;
+        }else{
+            trace("no song to set volume");
+            return;
+        }
+    }
+    
+    private function doThumbDrag(event:Event):void {
+        if(sound == null) return;
+        
+        var playhead:Number = timeSlider.value;
+        filter.sourcePosition = (playhead * soundSizeInBytes) / TIMESLIDERLENGTH;
+    }
+    
+    private function handleLoopSlider(event:Event):void {
+    	leftThumbTime = (loopSlider.values[0] * soundLength) / TIMESLIDERLENGTH;
+    	rightThumbTime = (loopSlider.values[1] * soundLength) / TIMESLIDERLENGTH;
+    	
+    	leftThumbBytes = leftThumbTime * FREQUENCY;
+    	rightThumbBytes = rightThumbTime * FREQUENCY;
+    }
+    
+    private function handlePlaylist(event:Event):void {
+    	sound = new Sound();
+    	sound.addEventListener(Event.COMPLETE, onSoundLoaded);
+    	var urlReq:URLRequest = new URLRequest(event.target.selectedItem.data);
+    	
+    	sound.load(urlReq)
+    	//currentSoundIndex = event.target.selectedIndex;
+    	currentItem = XMLListCollection(playlist.dataProvider).getItemAt(event.target.selectedIndex);
+        playlist.rowColorFunction = selectPlayedItemColor;
+    	
+    }
+    
+    private function onSoundLoaded(event:Event):void {
+    	soundLength = sound.length;
+        soundSizeInBytes = soundLength * FREQUENCY;
+          
+        preparePlayer();
+    }
+    
+    private function handleLoopStepper(event:Event):void {
+    	timeAfterLoop = timeAfterLoopStepper.value * 1000;
+    }
+    
+    private function clearPlaylist(event:Event):void {
+    	playlist.dataProvider = null;
+    }
+    
+    public function deleteItem(event:Event):void {
+    	var gridDP:XMLListCollection = playlist.dataProvider as XMLListCollection;
+    	var selectedItemIndex:int = playlist.selectedIndex;
+    	if(selectedItemIndex != gridDP.getItemIndex(currentItem)) {
+    	    gridDP.removeItemAt(selectedItemIndex);
+    	}
+    }
+    
+    private function selectPlayedItemColor(dg:DataGrid, rowIndex:int, color:uint):uint
+    {
+        var rColor:uint;
+        var currentItemIndex:int = XMLListCollection(dg.dataProvider).getItemIndex(currentItem);
+        if( rowIndex == currentItemIndex ) {
+            rColor = 0xFFFF00;
+        } else {
+            rColor = color;
+        }
+        return rColor;
+    }
+    
+    
+    //      dragStart="initMove(event)" 
+    //    dragComplete="handleDrop(event)"
+/*     private function initMove(event:Event):void {
+        if(playlist.selectedIndex == currentSoundIndex) {
+            selectedItemIndex = playlist.selectedIndex;
+            trace("drag : " + selectedItemIndex);
+        }
+    }
+    
+    private function handleDrop(event:Event):void {
+        if(currentSoundIndex == selectedItemIndex) {
+            currentSoundIndex = playlist.calculateDropIndex();
+            trace("drop : " + currentSoundIndex);
+        }
+    } */
+    
+/*     private function doDragEnter(event:DragEvent):void {
+    	trace("enter");
+    	var dropTarget:DataGrid = event.currentTarget as DataGrid;
+        var dataInfo:XMLListCollection = dropTarget.dataProvider as XMLListCollection;
+        var items:Array = event.dragSource.dataForFormat("items") as Array;
+        
+        var drop:Boolean = true;
+        
+        for(var i:int = 0; i < dataInfo.length; i++){
+            if(dataInfo[i].data == items[0].data) drop = false;
+        }
+        
+        if (drop) {
+        	trace("here");
+        	DragManager.showFeedback(DragManager.COPY);
+        }
+
+
+
+    }
+    
+    private function doDragDrop(event:DragEvent):void {
+    	trace("drop");
+    } */
+    
+  ]]></mx:Script>
+</mx:VBox>

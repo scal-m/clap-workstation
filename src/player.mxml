@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml">
+  <mx:Panel title="SoundTouch Demo" width="100%" paddingTop="10" paddingRight="10" paddingBottom="10" paddingLeft="10">
+    <mx:HBox paddingBottom="10">
+      <mx:Button id="browseButton" label="Open an MP3…" click="chooseFile();"/>
+    </mx:HBox>
+    <mx:VBox width="100%">
+      <mx:Label text="Tempo"/>
+      <mx:HSlider id="tempoSlider" minimum="0.01" maximum="1.99" value="1" snapInterval="0.01" liveDragging="false" change="updateFilter();" width="100%"/>
+
+      <mx:Label text="Rate"/>
+      <mx:HSlider id="rateSlider" minimum="0.01" maximum="1.99" value="1" snapInterval="0.01" liveDragging="false" change="updateFilter();" width="100%"/>
+
+      <mx:Label text="Pitch"/>
+      <mx:HSlider id="pitchSlider" minimum="-1" maximum="1" value="0" snapInterval="0.01" liveDragging="false" change="updateFilter();" width="100%"/>
+    </mx:VBox>
+    <mx:Button id="playButton" label="Play" enabled="false" click="togglePlayPause();"/>
+    <mx:Label text="Tempo: " id="tempoLabel"/>
+    <mx:Label text="Rate: " id="rateLabel"/>
+  </mx:Panel>
+
+  <mx:Script><![CDATA[
+    import com.ryanberdeen.soundtouch.SimpleFilter;
+    import com.ryanberdeen.soundtouch.SoundTouch;
+    import com.ryanberdeen.soundtouch.FifoSampleBuffer;
+
+    import flash.events.Event;
+    import flash.media.Sound;
+    import flash.net.FileReference;
+
+    import org.audiofx.mp3.MP3FileReferenceLoader;
+    import org.audiofx.mp3.MP3SoundEvent;
+
+    private var fileReference:FileReference;
+    private var mp3Loader:MP3FileReferenceLoader;
+    private var sound:Sound;
+
+    private var outputSound:Sound;
+    private var soundChannel:SoundChannel;
+    private var soundTouch:SoundTouch;
+
+    private var playing:Boolean;
+
+    private function chooseFile():void {
+      fileReference = new FileReference();
+      fileReference.addEventListener(Event.SELECT, handleFileSelected);
+      fileReference.browse([new FileFilter("MP3 Files", "*.mp3")]);
+    }
+
+    private function handleFileSelected(e:Event):void {
+      resetPlayer();
+      mp3Loader = new MP3FileReferenceLoader();
+      mp3Loader.addEventListener(Event.COMPLETE, handleSoundLoadComplete);
+      mp3Loader.getSound(fileReference);
+    }
+
+    private function handleSoundLoadComplete(e:MP3SoundEvent):void {
+      mp3Loader.removeEventListener(Event.COMPLETE, handleSoundLoadComplete);
+      sound = e.sound;
+
+      preparePlayer();
+    }
+
+    private function preparePlayer():void {
+      resetPlayer();
+
+      outputSound = new Sound();
+      soundTouch = new SoundTouch();
+      updateFilter();
+
+      var filter:SimpleFilter = new SimpleFilter(sound, soundTouch);
+
+      outputSound.addEventListener(SampleDataEvent.SAMPLE_DATA, filter.handleSampleData);
+
+      playButton.enabled = true;
+      playButton.label = "Play";
+      playing = false;
+    }
+
+    private function updateFilter():void {
+      if (soundTouch != null) {
+        soundTouch.tempo = tempoSlider.value;
+        soundTouch.rate = rateSlider.value;
+        soundTouch.pitchOctaves = pitchSlider.value;
+
+        tempoLabel.text = "Tempo: " + soundTouch.tempo;
+        rateLabel.text = "Rate: " + soundTouch.rate;
+      }
+    }
+
+    private function resetPlayer():void {
+      if (playing) {
+        pause();
+      }
+      soundChannel = null;
+    }
+
+    private function soundCompleteHandler(e:Event):void {
+      preparePlayer();
+    }
+
+    private function togglePlayPause():void {
+      if (!playing) {
+        play();
+      }
+      else {
+        pause();
+      }
+    }
+
+    private function play():void {
+      soundChannel = outputSound.play();
+      soundChannel.addEventListener(Event.SOUND_COMPLETE, soundCompleteHandler);
+      playing = true;
+
+      playButton.label = "Pause";
+      playing = true;
+    }
+
+    private function pause():void {
+      if (playing) {
+        soundChannel.removeEventListener(Event.SOUND_COMPLETE, soundCompleteHandler);
+        soundChannel.stop();
+        playing = false;
+      }
+
+      playButton.label = "Play";
+      playing = false;
+    }
+  ]]></mx:Script>
+</mx:Application>

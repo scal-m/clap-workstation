@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<songs>
+    <song id="0001">
+        <artist>Amy Winehouse</artist>
+        <title>You Know I'm No Good</title>
+        <data>
+            <normal>http://scapoual.free.fr/things/102  Amy Winehouse - You Know Im No Good.mp3</normal>
+            <metronome>http://scapoual.free.fr/things/102  Amy Winehouse - You Know Im No Good.mp3</metronome>
+            
+        </data>
+    </song>
+    <song id="0002">
+        <artist>Tom Caruana</artist>
+        <title>R.E.C. Room</title>
+        <data>
+            <normal>http://scapoual.free.fr/things/12 R.E.C. Room.mp3</normal>
+            <metronome>http://scapoual.free.fr/things/12 R.E.C. Room.mp3</metronome>
+        </data>
+    </song>
+    <song id="0003">
+        <artist>Jacob Miller</artist>
+        <title>03 - 80,000 Careless Ethiopians</title>
+        <data>
+            <normal>http://scapoual.free.fr/things/03 - 80,000 Careless Ethiopians.mp3</normal>
+            <metronome>http://scapoual.free.fr/things/03 - 80,000 Careless Ethiopians.mp3</metronome>
+        </data>
+    </song>
+    <song id="0004">
+        <artist>April March</artist>
+        <title>Laisse Tomber Les Filles</title>
+        <data>
+            <normal>http://scapoual.free.fr/things/April%20March%20-%20Laisse%20Tomber%20Les%20Filles.mp3</normal>
+            <metronome>http://scapoual.free.fr/things/April%20March%20-%20Laisse%20Tomber%20Les%20Filles.mp3</metronome>
+        </data>
+    </song>
+    <song id="0005">
+        <artist>Gabriel Fauré</artist>
+        <title>Romance</title>
+        <data>
+            <normal>http://scapoual.free.fr/things/cello_faure_romance_n.mp3</normal>
+            <metronome>http://scapoual.free.fr/things/cello_faure_romance_c.mp3</metronome>
+        </data>
+    </song>
+</songs>
