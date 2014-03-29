@@ -1,0 +1,176 @@
+
+.controlBarStyle
+{
+	thumbDisabledSkin: Embed(source="components/assets/controlBar.swf", symbol="Slider_controlBar_thumbDisabledSkin");
+	thumbDownSkin: Embed(source="components/assets/controlBar.swf", symbol="Slider_controlBar_thumbDownSkin");
+	thumbOverSkin: Embed(source="components/assets/controlBar.swf", symbol="Slider_controlBar_thumbOverSkin");
+	thumbUpSkin: Embed(source="components/assets/controlBar.swf", symbol="Slider_controlBar_thumbUpSkin");
+	trackHighlightSkin: Embed(source="components/assets/controlBar.swf", symbol="Slider_controlBar_trackHighlightSkin");
+	trackSkin: Embed(source="components/assets/controlBar.swf", symbol="Slider_controlBar_trackSkin");
+}
+
+.loopSliderStyle
+{
+	thumbDisabledSkin: Embed(source="components/assets/loopslider.swf", symbol="Slider_thumbDisabledSkin");
+	thumbDownSkin: Embed(source="components/assets/loopslider.swf", symbol="Slider_thumbDownSkin");
+	thumbOverSkin: Embed(source="components/assets/loopslider.swf", symbol="Slider_thumbOverSkin");
+	thumbUpSkin: Embed(source="components/assets/loopslider.swf", symbol="Slider_thumbUpSkin");
+	trackHighlightSkin: Embed(source="components/assets/loopslider.swf", symbol="Slider_trackHighlightSkin");
+	trackSkin: Embed(source="components/assets/loopslider.swf", symbol="Slider_trackSkin");
+}
+
+.playButtonStyle
+{
+	disabledSkin: Embed(source="components/assets/play.swf", symbol="Button_disabledSkin");
+	downSkin: Embed(source="components/assets/play.swf", symbol="Button_downSkin");
+	overSkin: Embed(source="components/assets/play.swf", symbol="Button_overSkin");
+	upSkin: Embed(source="components/assets/play.swf", symbol="Button_upSkin");
+}
+
+.pauseButtonStyle
+{
+	disabledSkin: Embed(source="components/assets/pause.swf", symbol="Button_disabledSkin");
+	downSkin: Embed(source="components/assets/pause.swf", symbol="Button_downSkin");
+	overSkin: Embed(source="components/assets/pause.swf", symbol="Button_overSkin");
+	upSkin: Embed(source="components/assets/pause.swf", symbol="Button_upSkin");
+}
+
+.timeSliderStyle
+{
+    thumbDisabledSkin: Embed(source="components/assets/timeslider.swf", symbol="Slider_thumbDisabledSkin");
+    thumbDownSkin: Embed(source="components/assets/timeslider.swf", symbol="Slider_thumbDownSkin");
+    thumbOverSkin: Embed(source="components/assets/timeslider.swf", symbol="Slider_thumbOverSkin");
+    thumbUpSkin: Embed(source="components/assets/timeslider.swf", symbol="Slider_thumbUpSkin");
+    trackHighlightSkin: Embed(source="components/assets/timeslider.swf", symbol="Slider_trackHighlightSkin");
+    trackSkin: Embed(source="components/assets/timeslider.swf", symbol="Slider_trackSkin");
+}
+
+.soundLoadProgressStyle
+{
+	barSkin: Embed(source="components/assets/soundloadprogress.swf", symbol="ProgressBar_barSkin");
+	indeterminateSkin: Embed(source="components/assets/soundloadprogress.swf", symbol="ProgressBar_indeterminateSkin");
+	trackSkin: Embed(source="components/assets/soundloadprogress.swf", symbol="ProgressBar_trackSkin");
+}
+
+.volumeSliderStyle
+{
+	thumbDisabledSkin: Embed(source="components/assets/volumeslider.swf", symbol="Slider_thumbDisabledSkin");
+	thumbDownSkin: Embed(source="components/assets/volumeslider.swf", symbol="Slider_thumbDownSkin");
+	thumbOverSkin: Embed(source="components/assets/volumeslider.swf", symbol="Slider_thumbOverSkin");
+	thumbUpSkin: Embed(source="components/assets/volumeslider.swf", symbol="Slider_thumbUpSkin");
+	trackHighlightSkin: Embed(source="components/assets/volumeslider.swf", symbol="Slider_trackHighlightSkin");
+	trackSkin: Embed(source="components/assets/volumeslider.swf", symbol="Slider_trackSkin");
+}
+
+.libraryStyle
+{
+	borderSkin: Embed(source="components/assets/library.swf", symbol="DataGrid_borderSkin");
+	columnDropIndicatorSkin: Embed(source="components/assets/library.swf", symbol="DataGrid_columnDropIndicatorSkin");
+	columnResizeSkin: Embed(source="components/assets/library.swf", symbol="DataGrid_columnResizeSkin");
+	headerBackgroundSkin: Embed(source="components/assets/library.swf", symbol="DataGrid_headerBackgroundSkin");
+	headerSeparatorSkin: Embed(source="components/assets/library.swf", symbol="DataGrid_headerSeparatorSkin");
+	sortArrowSkin: Embed(source="components/assets/library.swf", symbol="DataGrid_sortArrowSkin");
+	stretchCursor: Embed(source="components/assets/library.swf", symbol="DataGrid_stretchCursor");
+}
+
+.pitchSliderMagneticStyle
+{
+	disabledIcon: Embed(source="components/assets/pitchslidermagnetic.swf", symbol="CheckBox_disabledIcon");
+	downIcon: Embed(source="components/assets/pitchslidermagnetic.swf", symbol="CheckBox_downIcon");
+	overIcon: Embed(source="components/assets/pitchslidermagnetic.swf", symbol="CheckBox_overIcon");
+	selectedDisabledIcon: Embed(source="components/assets/pitchslidermagnetic.swf", symbol="CheckBox_selectedDisabledIcon");
+	selectedDownIcon: Embed(source="components/assets/pitchslidermagnetic.swf", symbol="CheckBox_selectedDownIcon");
+	selectedOverIcon: Embed(source="components/assets/pitchslidermagnetic.swf", symbol="CheckBox_selectedOverIcon");
+	selectedUpIcon: Embed(source="components/assets/pitchslidermagnetic.swf", symbol="CheckBox_selectedUpIcon");
+	upIcon: Embed(source="components/assets/pitchslidermagnetic.swf", symbol="CheckBox_upIcon");
+}
+
+.controlsTopShadow
+{
+    borderSkin: ClassReference("components.RepeatedBackground");
+    background-image: Embed("components/assets/player_haut.jpg");
+}
+
+.controlsRightShadow
+{
+    borderSkin: ClassReference("components.RepeatedBackground");
+    background-image: Embed("components/assets/player_droite.jpg");
+}
+
+.biblio
+{
+    borderSkin: ClassReference("components.RepeatedBackground");
+    background-image: Embed("components/assets/biblio_bg.jpg");  
+}
+
+.metronomeSwithStyle
+{
+	disabledIcon: Embed(source="components/assets/metronomeswitch.swf", symbol="CheckBox_disabledIcon");
+	downIcon: Embed(source="components/assets/metronomeswitch.swf", symbol="CheckBox_downIcon");
+	overIcon: Embed(source="components/assets/metronomeswitch.swf", symbol="CheckBox_overIcon");
+	selectedDisabledIcon: Embed(source="components/assets/metronomeswitch.swf", symbol="CheckBox_selectedDisabledIcon");
+	selectedDownIcon: Embed(source="components/assets/metronomeswitch.swf", symbol="CheckBox_selectedDownIcon");
+	selectedOverIcon: Embed(source="components/assets/metronomeswitch.swf", symbol="CheckBox_selectedOverIcon");
+	selectedUpIcon: Embed(source="components/assets/metronomeswitch.swf", symbol="CheckBox_selectedUpIcon");
+	upIcon: Embed(source="components/assets/metronomeswitch.swf", symbol="CheckBox_upIcon");
+}
+
+.diapasonButtonStyle
+{
+	disabledSkin: Embed(source="components/assets/diapason.swf", symbol="Button_disabledSkin");
+	downSkin: Embed(source="components/assets/diapason.swf", symbol="Button_downSkin");
+	overSkin: Embed(source="components/assets/diapason.swf", symbol="Button_overSkin");
+	upSkin: Embed(source="components/assets/diapason.swf", symbol="Button_upSkin");
+}
+
+.saveLoopStyle
+{
+	disabledSkin: Embed(source="components/assets/saveloop.swf", symbol="Button_disabledSkin");
+	downSkin: Embed(source="components/assets/saveloop.swf", symbol="Button_downSkin");
+	overSkin: Embed(source="components/assets/saveloop.swf", symbol="Button_overSkin");
+	upSkin: Embed(source="components/assets/saveloop.swf", symbol="Button_upSkin");
+}
+
+.resetLoopStyle
+{
+	disabledSkin: Embed(source="components/assets/resetloop.swf", symbol="Button_disabledSkin");
+	downSkin: Embed(source="components/assets/resetloop.swf", symbol="Button_downSkin");
+	overSkin: Embed(source="components/assets/resetloop.swf", symbol="Button_overSkin");
+	upSkin: Embed(source="components/assets/resetloop.swf", symbol="Button_upSkin");
+}
+HScrollBar
+{
+	downArrowDisabledSkin: Embed(source="components/assets/asc.swf", symbol="HScrollBar_downArrowDisabledSkin");
+	downArrowDownSkin: Embed(source="components/assets/asc.swf", symbol="HScrollBar_downArrowDownSkin");
+	downArrowOverSkin: Embed(source="components/assets/asc.swf", symbol="HScrollBar_downArrowOverSkin");
+	downArrowUpSkin: Embed(source="components/assets/asc.swf", symbol="HScrollBar_downArrowUpSkin");
+	thumbDownSkin: Embed(source="components/assets/asc.swf", symbol="HScrollBar_thumbDownSkin");
+	thumbIcon: Embed(source="components/assets/asc.swf", symbol="HScrollBar_thumbIcon");
+	thumbOverSkin: Embed(source="components/assets/asc.swf", symbol="HScrollBar_thumbOverSkin");
+	thumbUpSkin: Embed(source="components/assets/asc.swf", symbol="HScrollBar_thumbUpSkin");
+	trackDisabledSkin: Embed(source="components/assets/asc.swf", symbol="HScrollBar_trackDisabledSkin");
+	trackSkin: Embed(source="components/assets/asc.swf", symbol="HScrollBar_trackSkin");
+	upArrowDisabledSkin: Embed(source="components/assets/asc.swf", symbol="HScrollBar_upArrowDisabledSkin");
+	upArrowDownSkin: Embed(source="components/assets/asc.swf", symbol="HScrollBar_upArrowDownSkin");
+	upArrowOverSkin: Embed(source="components/assets/asc.swf", symbol="HScrollBar_upArrowOverSkin");
+	upArrowUpSkin: Embed(source="components/assets/asc.swf", symbol="HScrollBar_upArrowUpSkin");
+}
+VScrollBar
+{
+	downArrowDisabledSkin: Embed(source="components/assets/asc.swf", symbol="VScrollBar_downArrowDisabledSkin");
+	downArrowDownSkin: Embed(source="components/assets/asc.swf", symbol="VScrollBar_downArrowDownSkin");
+	downArrowOverSkin: Embed(source="components/assets/asc.swf", symbol="VScrollBar_downArrowOverSkin");
+	downArrowUpSkin: Embed(source="components/assets/asc.swf", symbol="VScrollBar_downArrowUpSkin");
+	thumbDownSkin: Embed(source="components/assets/asc.swf", symbol="VScrollBar_thumbDownSkin");
+	thumbIcon: Embed(source="components/assets/asc.swf", symbol="VScrollBar_thumbIcon");
+	thumbOverSkin: Embed(source="components/assets/asc.swf", symbol="VScrollBar_thumbOverSkin");
+	thumbUpSkin: Embed(source="components/assets/asc.swf", symbol="VScrollBar_thumbUpSkin");
+	trackDisabledSkin: Embed(source="components/assets/asc.swf", symbol="VScrollBar_trackDisabledSkin");
+	trackSkin: Embed(source="components/assets/asc.swf", symbol="VScrollBar_trackSkin");
+	upArrowDisabledSkin: Embed(source="components/assets/asc.swf", symbol="VScrollBar_upArrowDisabledSkin");
+	upArrowDownSkin: Embed(source="components/assets/asc.swf", symbol="VScrollBar_upArrowDownSkin");
+	upArrowOverSkin: Embed(source="components/assets/asc.swf", symbol="VScrollBar_upArrowOverSkin");
+	upArrowUpSkin: Embed(source="components/assets/asc.swf", symbol="VScrollBar_upArrowUpSkin");
+}
+
+

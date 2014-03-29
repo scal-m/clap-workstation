@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" width="600" height="600" xmlns:code="http://code.google.com/p/flexlib/" creationComplete="initControls();" xmlns:components="components.*">
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" width="100%" height="100%" xmlns:code="http://code.google.com/p/flexlib/" creationComplete="initListeners();initControls();" xmlns:components="components.*" backgroundColor="#EFEDEB">
 
 
   <mx:Script><![CDATA[
-      import mx.controls.advancedDataGridClasses.AdvancedDataGridColumn;
+    import mx.controls.advancedDataGridClasses.AdvancedDataGridColumn;
   	import mx.managers.DragManager;
   	import mx.collections.ArrayCollection;
   	import mx.events.DragEvent;
@@ -52,6 +52,16 @@
     private static var FREQUENCY:Number = 44.1;
     private static var TIMESLIDERLENGTH:int = 1000;
     
+
+    private function initListeners():void {
+        this.addEventListener(KeyboardEvent.KEY_DOWN,keyPressed);
+    }
+    
+    private function keyPressed(event:KeyboardEvent):void {
+        if(event.keyCode == 32) {
+            this.focusManager.setFocus(this.playButton);
+        }
+    }
 
     private function preparePlayer(sound2play:Sound,startPosition:Number = 0):void {
       this.initControls();
@@ -167,8 +177,8 @@
             soundTouch.pitchOctaves = pitchSlider.value;
         }
 
-        tempoLabel.text = "Tempo: " + getCurrentTempo();
-        pitchLabel.text = "Tone: " + getPitchString(pitchSlider.value);
+        tempoLabel.text = "" + getCurrentTempo();
+        pitchLabel.text = "" + getPitchString(pitchSlider.value);
       }
     }
     
@@ -182,18 +192,22 @@
     
     private function getPitchString(value:Number):String {
         if(this.pitchSliderMagnetic.selected == true){
-            if(value > 0) {
-                if(value % 2 != 0) {
-                    if(value == 1) {
-                        return "½";
-                    }else {
-                        return ((value / 2) - 0.5) + "½";
+            if(value % 2 != 0) {
+                if(value == 1) {
+                    return "½";
+                }else {
+                    if(value == -1) {
+                        return "-½";
+                    } else {
+                        if(value > 0) {
+                            return ((value / 2) - 0.5) + "½";
+                        } else {
+                            return ((value / 2) + 0.5) + "½";
+                        }
                     }
-                } else {
-                    return (value / 2).toString();
                 }
             } else {
-                
+                return (value / 2).toString();
             }
         }
         return Math.round(value * 6 * 100) / 100 + "";
@@ -242,6 +256,7 @@
         this.resetLoop.enabled = true;
         this.timeAfterLoopStepper.enabled = true;
         this.pitchSliderMagnetic.enabled = true;
+        this.metronomeSwitch.enabled = true;
     }
     
     private function initLoopSlider():void {
@@ -270,14 +285,17 @@
         
         var urlReq:URLRequest = new URLRequest(soundURL);
         
-        this.soundLoadProgress.visible = true;
+        //this.soundLoadProgress.visible = true;
         
         this.initControls();
         
         var soundContext:SoundLoaderContext = new SoundLoaderContext(5000,true);
         sound.load(urlReq,soundContext);
         soundChannel = sound.play();
-        this.playButton.label = "Pause";
+        //this.playButton.label = "Pause";
+        playButton.styleName = "pauseButtonStyle";
+        
+        currentSongLabel.htmlText = "<b>" + currentItem.artist + "</b>" + " - " + currentItem.title; 
         
         this.playButton.enabled = true;   
         playing = true;
@@ -318,7 +336,7 @@
         sound.removeEventListener(IOErrorEvent.IO_ERROR,ioErrorHandler);
         sound.removeEventListener(ProgressEvent.PROGRESS, progressHandler);
 
-        soundLoadProgress.visible=false;
+        //soundLoadProgress.visible=false;
         
         loading = false;
         
@@ -429,6 +447,8 @@
                 metronomicSoundUrl = null;
                 currentItem = null;
                 this.initControls();
+                currentSongLabel.htmlText = ""; 
+                
             }
             
             library.invalidateList();
@@ -443,13 +463,15 @@
                 this.removeEventListener(Event.ENTER_FRAME, onEnterFrame);
                 soundChannel.stop();
                 playing = false;
-                playButton.label = "Play";
+                //playButton.label = "Play";
+                playButton.styleName = "playButtonStyle";
             } else{
                 soundChannel = sound.play(pausePosition);
                 this.addEventListener(Event.ENTER_FRAME, onEnterFrame);
                 setVolume(volumeSlider.value);
                 playing = true;
-                playButton.label = "Pause";                
+                //playButton.label = "Pause";
+                playButton.styleName = "pauseButtonStyle";                
             }
         } else{
             if(currentItem){
@@ -481,7 +503,8 @@
       this.addEventListener(Event.ENTER_FRAME, onEnterFrame);
       setVolume(volumeSlider.value);
       playing = true;
-      playButton.label = "Pause";
+      //playButton.label = "Pause";
+      playButton.styleName = "pauseButtonStyle";
     }
  
     private function pause():void {
@@ -491,7 +514,8 @@
         soundChannel.stop();
       }
       playing = false;
-      playButton.label = "Play";
+      //playButton.label = "Play";
+      playButton.styleName = "playButtonStyle";
       
     }
     
@@ -538,13 +562,14 @@
     private function handlePlaylist(event:Event):void {
         soundUrl = event.target.selectedItem.data.normal;
         metronomicSoundUrl = event.target.selectedItem.data.metronome;
- 
+        
+        currentItem = XMLListCollection(library.dataProvider).getItemAt(event.currentTarget.selectedIndex);
+         
         loadSound(soundUrl);
         
         //currentSoundIndex = event.currentTarget.selectedIndex;
         
-        currentItem = XMLListCollection(library.dataProvider).getItemAt(event.currentTarget.selectedIndex);
-        
+                
         library.invalidateList();
     }
      
@@ -589,7 +614,8 @@
         this.pitchSlider.snapInterval = 1;
         this.pitchSlider.minimum = -12;
         this.pitchSlider.maximum = 12;
-        this.pitchSlider.value *= 12; 
+        this.pitchSlider.value *= 12;
+        this.pitchSlider.tickInterval = 2 
     }
     
     private function demagnetizePitchSlider():void {
@@ -597,6 +623,7 @@
         this.pitchSlider.minimum = -1;
         this.pitchSlider.maximum = 1;
         this.pitchSlider.value /= 12;
+        this.pitchSlider.tickInterval = 0.2;
     }
     
     private function handlePitchSliderMagnetization(e:Event):void {
@@ -609,16 +636,155 @@
     
   ]]></mx:Script>
   
+    
+        
+    <mx:Canvas width="100%">
+        <mx:Image source="components/assets/label.png" x="0" y="0" />
+        <mx:Text text="PLAYER" x="10" y="1" color="#ffffff" fontSize="12" letterSpacing="3" />
+        <mx:ProgressBar 
+            id="soundLoadProgress" 
+            styleName="soundLoadProgressStyle" 
+            visible="true" 
+            minimum="0" 
+            maximum="100" 
+            label="" 
+            direction="right" 
+            mode="manual" 
+            left="320" 
+            right="320" 
+            top="20"/>
+        <mx:Label id="currentSongLabel" htmlText="" top="28" left="340"/>
+        <mx:HBox top="7" right="7" verticalAlign="middle" autoLayout="false" horizontalGap="6">
+            <mx:Image source="components/assets/chrono.gif" />
+            <mx:NumericStepper id="timeAfterLoopStepper" minimum="0" maximum="9" value="0" change="handleLoopStepper(event)"/>
+            <mx:Canvas>
+                <mx:Label id="countdown" text="0"/>
+                <mx:Label text="sec." x="10"/>
+            </mx:Canvas>
+        </mx:HBox>
+        <mx:Button id="saveLoop" label="" right="70" top="120" styleName="saveLoopStyle" />
+        <mx:Button id="resetLoop" label="" click="initLoopSlider();" right="30" top="120" styleName="resetLoopStyle"/>
+    </mx:Canvas>
+        
+    <mx:Canvas width="100%" top="50">    
+        <mx:Button id="playButton" label="" enabled="false" click="togglePlayPause();" styleName="playButtonStyle" left="20" top="16"/>
+        <mx:Canvas width="100%" left="85" right="20">
+            <mx:Canvas width="100%" top="0">
+                <mx:Label id="songTime" text="00:00" left="0"/>
+                <mx:Label id="songTotalTime" text="00:00" right="0"/>
+            </mx:Canvas>
+            <mx:Canvas width="100%" top="15">
+                <mx:HSlider id="loopSlider" 
+                    styleName="loopSliderStyle"
+                    thumbCount="2" 
+                    showTrackHighlight="true" 
+                    minimum="0.0" 
+                    maximum="1000" 
+                    snapInterval="0.01"
+                    thumbOffset="13"
+                    change="handleLoopSlider(event);" 
+                    click="handleLoopSlider(event);"
+                    width="100%"
+                    showDataTip="false"
+                    toolTip="{}"
+                    y="18"
+                    tickInterval="20" 
+                    tickOffset="23"/>
+                    
+                <mx:HSlider id="timeSlider" 
+                    styleName="timeSliderStyle"
+                    minimum="0.0" 
+                    maximum="1000" 
+                    snapInterval="0.01" 
+                    toolTip="{}" 
+                    liveDragging="true" 
+                    allowTrackClick="false" 
+                    thumbDrag="doThumbDrag(event)" 
+                    thumbRelease="doThumbDrag(event)" 
+                    width="100%" 
+                    showDataTip="false"
+                    invertThumbDirection="true"
+                    trackSkin="components.LoopSliderTrackSkin"
+                    y="0"/>
+            </mx:Canvas>    
+        </mx:Canvas>
+    </mx:Canvas>
+    
+    <mx:Canvas top="150" bottom="150" left="0" right="300" backgroundColor="#FAF9F8">
+        <mx:Image source="components/assets/rond_volume.jpg" right="0" top="0"/>
+        <mx:Box styleName="controlsTopShadow" top="0" right="110" height="10" left="0"/>
+        <mx:Box styleName="controlsRightShadow" top="109" right="0" width="10" bottom="0"/>
+        
+        <mx:HBox width="102" height="119" right="0" top="0" verticalAlign="middle" horizontalGap="-5">
+            <mx:Label text="Volume" letterSpacing="0" fontSize="8" color="#1E1E23"/>
+            <mx:VSlider id="volumeSlider" 
+                styleName="volumeSliderStyle" height="74" 
+                showTrackHighlight="true" 
+                minimum="0" 
+                maximum="1" 
+                snapInterval="0.01" 
+                liveDragging="true" 
+                allowTrackClick="true" 
+                change="setVolume(this.volumeSlider.value);" 
+                value="1"/>
+         </mx:HBox>
+        <mx:HBox horizontalGap="100" top="50" left="20" right="180">
+            
+            <mx:VBox width="100%" verticalGap="20">
+                <mx:Label text="Tempo primo" fontSize="14"/>
+                <mx:HBox width="100%" verticalAlign="middle" horizontalGap="20">
+                    <mx:HSlider id="tempoSlider" 
+                        styleName="controlBarStyle" 
+                        minimum="0.5" 
+                        maximum="1.5" 
+                        value="1" 
+                        snapInterval="0.01" 
+                        liveDragging="false" 
+                        allowTrackClick="true" 
+                        change="updateFilter();" 
+                        width="100%" 
+                        sliderThumbClass="components.ControlBarThumb" 
+                        tickInterval="0.1" 
+                        tickOffset="10"/>  
+                    <mx:Label text="" id="tempoLabel"/>
+                    <mx:CheckBox id="metronomeSwitch" styleName="metronomeSwithStyle" enabled="false" click="handleMetronomeSwitch(event);"/>
+                </mx:HBox>
+                <mx:Label text="Tonalité" fontSize="14"/>
+                <mx:HBox width="100%" verticalAlign="middle" horizontalGap="20">
+                    <mx:HSlider id="pitchSlider" 
+                        styleName="controlBarStyle" 
+                        minimum="-12" 
+                        maximum="12" 
+                        value="0" 
+                        snapInterval="1" 
+                        liveDragging="false" 
+                        allowTrackClick="true" 
+                        change="updateFilter();" 
+                        dataTipFormatFunction="{getPitchString}" 
+                        width="100%"
+                        sliderThumbClass="components.ControlBarThumb"
+                        tickInterval="2" 
+                        tickOffset="10"/>
+                        <mx:CheckBox id="pitchSliderMagnetic" styleName="pitchSliderMagneticStyle" label="" selected="true" click="handlePitchSliderMagnetization(event);"/>
+                        <mx:Label text="" id="pitchLabel"/>
+                        <mx:Button id="diapasonButton" styleName="diapasonButtonStyle"/>
+                </mx:HBox>
+            </mx:VBox>
+        </mx:HBox>    
+    </mx:Canvas>
+    <mx:Canvas left="0" right="300" bottom="153" styleName="biblio">
+        <mx:Text text="MA BIBLIOTHÈQUE" x="10" y="1" color="#cac3bb" fontSize="12" letterSpacing="3" />
+        
+    </mx:Canvas>
+    
+    <mx:XML id="songsXML" source="../data/songs.xml" />
+    <mx:XMLListCollection id="songsListXML" source="{songsXML.song}" />
 
-
-  <mx:XML id="songsXML" source="../data/songs.xml" />
-  <mx:XMLListCollection id="songsListXML" source="{songsXML.song}" />
-
-    <mx:AdvancedDataGrid
+    <components:LibraryADG
         id="library" 
+        styleName="libraryStyle"
         dataProvider="{songsListXML}" 
-        width="100%" 
-        height="100%" 
+        width="100%"
         verticalScrollPolicy="auto" 
         horizontalScrollPolicy="off"
         draggableColumns="false"
@@ -627,105 +793,22 @@
         dragEnabled="true"
         dropEnabled="true" 
         dragMoveEnabled="true" 
-        styleFunction="currentSoundPlayingStyle">
-        <mx:columns>
+        styleFunction="currentSoundPlayingStyle"
+        alternatingItemColors="[#FFFFFF,#EFEDEB]" 
+        selectionColor="#AB9F92" 
+        textSelectedColor="#FFFFFF" 
+        rollOverColor="#CAC3BB" 
+        textRollOverColor="#1E1E23"
+        bottom="0"
+        left="0"
+        right="300">
+        <components:columns>
             <mx:AdvancedDataGridColumn dataField="artist" headerText="Artist"/>
             <mx:AdvancedDataGridColumn dataField="title" headerText="Title" />
             <!--mx:DataGridColumn dataField="data" headerText="" width="0" resizable="false"/-->
-        </mx:columns>
-    </mx:AdvancedDataGrid>
+        </components:columns>
+    </components:LibraryADG>
   
-  <mx:HBox>
-    <mx:Label id="songTime" text="00:00"/>
-    <mx:Label width="10" text="/"/>
-    <mx:Label id="songTotalTime" text="00:00"/>
-    <mx:Button id="playButton" label="Play" enabled="false" click="togglePlayPause();"/>
-    <mx:ProgressBar id="soundLoadProgress" visible="false" minimum="0" maximum="100" label="" direction="right" mode="manual" />
-  </mx:HBox>
-  <mx:Canvas width="100%">
-    
-    
-    <code:HSlider id="loopSlider" 
-        thumbCount="2" 
-        showTrackHighlight="true" 
-        minimum="0.0" 
-        maximum="1000" 
-        snapInterval="0.01"
-        thumbOffset="6"
-        change="handleLoopSlider(event);" 
-        click="handleLoopSlider(event);"
-        width="100%"
-        showDataTip="false"
-        toolTip="{}"
-        y="0"/>
-        
-    <code:HSlider id="timeSlider" 
-        minimum="0.0" 
-        maximum="1000" 
-        snapInterval="0.01" 
-        toolTip="{}" 
-        liveDragging="true" 
-        allowTrackClick="false" 
-        thumbDrag="doThumbDrag(event)" 
-        thumbRelease="doThumbDrag(event)" 
-        width="100%" 
-        showDataTip="false" 
-        invertThumbDirection="true" 
-        trackSkin="components.LoopSliderTrackSkin"
-        y="-8"/>
-  </mx:Canvas>
   
-  <mx:HBox>
-      <mx:Button id="resetLoop" label="Reset Loop" click="initLoopSlider();" />
-      <mx:NumericStepper id="timeAfterLoopStepper" minimum="0" maximum="10" value="0" change="handleLoopStepper(event)"/>
-      <mx:Label id="countdown" text="0"/>
-      <mx:Label text="sec."/>
-  </mx:HBox>
 
-  <mx:HBox width="100%">
-    <mx:VBox width="100%">
-        <mx:HBox>
-            <mx:HSlider id="tempoSlider" 
-            minimum="0.5" 
-            maximum="1.5" 
-            value="1" 
-            snapInterval="0.01" 
-            liveDragging="false" 
-            allowTrackClick="true" 
-            change="updateFilter();" 
-            width="100%"/>  
-            <mx:Label text="Tempo: " id="tempoLabel"/>
-        </mx:HBox>
-        
-        <mx:HBox>
-            <mx:HSlider id="pitchSlider" 
-            minimum="-12" 
-            maximum="12" 
-            value="0" 
-            snapInterval="1" 
-            liveDragging="false" 
-            allowTrackClick="true" 
-            change="updateFilter();" 
-            dataTipFormatFunction="{getPitchString}" 
-            width="100%"/>
-            <mx:Label text="Tone: " id="pitchLabel"/>
-            <mx:CheckBox id="pitchSliderMagnetic" label="" selected="true" click="handlePitchSliderMagnetization(event);"/>
-        </mx:HBox>
-    </mx:VBox>
-    
-    <mx:CheckBox id="metronomeSwitch" label="Metronome" enabled="false" click="handleMetronomeSwitch(event);"/>
-    
-    <mx:VBox width="100%">
-        <mx:Label text="Volume"/>
-        <mx:VSlider id="volumeSlider" 
-            minimum="0" 
-            maximum="1" 
-            snapInterval="0.01" 
-            liveDragging="true" 
-            allowTrackClick="true" 
-            change="setVolume(this.volumeSlider.value);" 
-            value="0.5"/>
-    </mx:VBox>
-    
-  </mx:HBox>
-</mx:VBox>
+</mx:Canvas>

@@ -1,6 +1,102 @@
 <?xml version="1.0"?>
 <songs>
     <song id="0001">
+        <artist>Ludwig Van Beethoven</artist>
+        <title>160_fl_6-t-e-v_5_bee</title>
+        <data>
+            <normal>http://scapoual.free.fr/things/clap_test_encodage/160_fl_6-t-e-v_5_bee-n.mp3</normal>
+            <metronome>http://scapoual.free.fr/things/clap_test_encodage/160_fl_6-t-e-v_5_bee-c.mp3</metronome>
+        </data>
+    </song>
+    <song id="0002">
+        <artist>Ludwig Van Beethoven</artist>
+        <title>192_fl_6-t-e-v_5_bee</title>
+        <data>
+            <normal>http://scapoual.free.fr/things/clap_test_encodage/192_fl_6-t-e-v_5_bee-n.mp3</normal>
+            <metronome>http://scapoual.free.fr/things/clap_test_encodage/192_fl_6-t-e-v_5_bee-c.mp3</metronome>
+        </data>
+    </song>
+    <song id="0003">
+        <artist>Ludwig Van Beethoven</artist>
+        <title>224_fl_6-t-e-v_5_bee</title>
+        <data>
+            <normal>http://scapoual.free.fr/things/clap_test_encodage/224_fl_6-t-e-v_5_bee-n.mp3</normal>
+            <metronome>http://scapoual.free.fr/things/clap_test_encodage/224_fl_6-t-e-v_5_bee-c.mp3</metronome>
+        </data>
+    </song>
+    <song id="0004">
+        <artist>Ludwig Van Beethoven</artist>
+        <title>256_fl_6-t-e-v_5_bee</title>
+        <data>
+            <normal>http://scapoual.free.fr/things/clap_test_encodage/256_fl_6-t-e-v_5_bee-n.mp3</normal>
+            <metronome>http://scapoual.free.fr/things/clap_test_encodage/256_fl_6-t-e-v_5_bee-c.mp3</metronome>
+        </data>
+    </song>
+    <song id="0005">
+        <artist>Ludwig Van Beethoven</artist>
+        <title>vbr160_haut</title>
+        <data>
+            <normal>http://scapoual.free.fr/things/clap_test_encodage/vbr160_haut-n.mp3</normal>
+            <metronome>http://scapoual.free.fr/things/clap_test_encodage/vbr160_haut-c.mp3</metronome>
+        </data>
+    </song>
+    <song id="0006">
+        <artist>Ludwig Van Beethoven</artist>
+        <title>vbr160_max</title>
+        <data>
+            <normal>http://scapoual.free.fr/things/clap_test_encodage/vbr160_max-n.mp3</normal>
+            <metronome>http://scapoual.free.fr/things/clap_test_encodage/vbr160_max-c.mp3</metronome>
+        </data>
+    </song>
+    <song id="0007">
+        <artist>Ludwig Van Beethoven</artist>
+        <title>vbr192_haut</title>
+        <data>
+            <normal>http://scapoual.free.fr/things/clap_test_encodage/vbr192_haut-n.mp3</normal>
+            <metronome>http://scapoual.free.fr/things/clap_test_encodage/vbr192_haut-c.mp3</metronome>
+        </data>
+    </song>
+    <song id="0008">
+        <artist>Ludwig Van Beethoven</artist>
+        <title>vbr192_max</title>
+        <data>
+            <normal>http://scapoual.free.fr/things/clap_test_encodage/vbr192_max-n.mp3</normal>
+            <metronome>http://scapoual.free.fr/things/clap_test_encodage/vbr192_max-c.mp3</metronome>
+        </data>
+    </song>
+    <song id="0009">
+        <artist>Ludwig Van Beethoven</artist>
+        <title>vbr224_haut</title>
+        <data>
+            <normal>http://scapoual.free.fr/things/clap_test_encodage/vbr224_haut-n.mp3</normal>
+            <metronome>http://scapoual.free.fr/things/clap_test_encodage/vbr224_haut-c.mp3</metronome>
+        </data>
+    </song>
+    <song id="0010">
+        <artist>Ludwig Van Beethoven</artist>
+        <title>vbr224_max</title>
+        <data>
+            <normal>http://scapoual.free.fr/things/clap_test_encodage/vbr224_max-n.mp3</normal>
+            <metronome>http://scapoual.free.fr/things/clap_test_encodage/vbr224_max-c.mp3</metronome>
+        </data>
+    </song>
+    <song id="0011">
+        <artist>Ludwig Van Beethoven</artist>
+        <title>vbr256_haut</title>
+        <data>
+            <normal>http://scapoual.free.fr/things/clap_test_encodage/vbr256_haut-n.mp3</normal>
+            <metronome>http://scapoual.free.fr/things/clap_test_encodage/vbr256_haut-c.mp3</metronome>
+        </data>
+    </song>
+    <song id="0012">
+        <artist>Ludwig Van Beethoven</artist>
+        <title>vbr256_max</title>
+        <data>
+            <normal>http://scapoual.free.fr/things/clap_test_encodage/vbr256_max-n.mp3</normal>
+            <metronome>http://scapoual.free.fr/things/clap_test_encodage/vbr256_max-c.mp3</metronome>
+        </data>
+    </song>
+    <song id="0013">
         <artist>Amy Winehouse</artist>
         <title>You Know I'm No Good</title>
         <data>
@@ -9,7 +105,7 @@
             
         </data>
     </song>
-    <song id="0002">
+    <song id="0014">
         <artist>Tom Caruana</artist>
         <title>R.E.C. Room</title>
         <data>
@@ -17,7 +113,7 @@
             <metronome>http://scapoual.free.fr/things/12 R.E.C. Room.mp3</metronome>
         </data>
     </song>
-    <song id="0003">
+    <song id="0015">
         <artist>Jacob Miller</artist>
         <title>03 - 80,000 Careless Ethiopians</title>
         <data>
@@ -25,7 +121,7 @@
             <metronome>http://scapoual.free.fr/things/03 - 80,000 Careless Ethiopians.mp3</metronome>
         </data>
     </song>
-    <song id="0004">
+    <song id="0016">
         <artist>April March</artist>
         <title>Laisse Tomber Les Filles</title>
         <data>
@@ -33,7 +129,7 @@
             <metronome>http://scapoual.free.fr/things/April%20March%20-%20Laisse%20Tomber%20Les%20Filles.mp3</metronome>
         </data>
     </song>
-    <song id="0005">
+    <song id="0017">
         <artist>Gabriel Fauré</artist>
         <title>Romance</title>
         <data>
